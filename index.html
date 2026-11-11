@@ -143,6 +143,44 @@ h1{
     border-bottom:2px solid #dcd5cc;
 }
 
+
+/* ===== 達成率 ===== */
+
+.progress{
+    margin-top:-7px;
+    margin-bottom:14px;
+    font-size:0.78rem;
+    color:#8a827a;
+}
+
+.progress-text{
+    margin-bottom:6px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.progress-percent{
+    font-weight:bold;
+    color:#6b705c;
+}
+
+.progress-bar{
+    width:100%;
+    height:6px;
+    background:#eee9e3;
+    border-radius:999px;
+    overflow:hidden;
+}
+
+.progress-fill{
+    height:100%;
+    width:0%;
+    background:#a3b18a;
+    border-radius:999px;
+    transition:width 0.25s ease;
+}
+
 /* ===== 入力欄 ===== */
 
 .input-row{
@@ -209,10 +247,12 @@ h1{
     border-bottom:none;
 }
 
-.task.editable{.edit-mode .card{
+.task.editable{
+    cursor:grab;
+}
 
+.edit-mode .card{
     border:2px solid #b7c7a0;
-
 }
 
 .edit-mode .mini-card{
@@ -447,7 +487,7 @@ h1{
 
 }
 </style>
-<script type="text/javascript" nonce="b7a713f88d7a4eac93bcc9ac8ee" src="//local.adguard.org?ts=1791462136124&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_000000007f6881fab90efb996c375312%26ts%3D497648%26p%3Dfs%26cid%3D1%26sig%3Db57f08f59802157651c6b835a580305d9a52e19a9aabc7a92cae15f152c54773%26v%3D0&amp;app=com.android.chrome&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-dnt"></script><script type="text/javascript" nonce="b7a713f88d7a4eac93bcc9ac8ee" src="//local.adguard.org?ts=1791462136124&amp;name=AdGuard%20Extra&amp;type=user-script"></script></head>
+<script type="text/javascript" nonce="b7a713f88d7a4eac93bcc9ac8ee" src="//local.adguard.org?ts=1791279485038&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_00000000d9dc81f5a92177acda32f2ed%26fn%3Dindex.html%26cd%3Dattachment%26ts%3D497600%26p%3Dfs%26cid%3D1%26sig%3D82a655338857f07cabd5f60dce1522792486a26b58ecb8c963c1b87a5bf051dc%26v%3D0&amp;app=com.android.chrome&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-dnt"></script><script type="text/javascript" nonce="b7a713f88d7a4eac93bcc9ac8ee" src="//local.adguard.org?ts=1791279485038&amp;name=AdGuard%20Extra&amp;type=user-script"></script></head>
 
 <body>
 
@@ -481,6 +521,16 @@ h1{
             Inbox
         </h2>
 
+        <div class="progress">
+            <div class="progress-text">
+                <span class="progress-count">0 / 0 完了</span>
+                <span class="progress-percent">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+        </div>
+
         <div class="input-row">
 
             <input
@@ -508,6 +558,16 @@ h1{
             Routine
         </h2>
 
+        <div class="progress">
+            <div class="progress-text">
+                <span class="progress-count">0 / 0 完了</span>
+                <span class="progress-percent">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+        </div>
+
         <div
             class="task-list"
             id="list2">
@@ -521,6 +581,16 @@ h1{
             Review
         </h2>
 
+        <div class="progress">
+            <div class="progress-text">
+                <span class="progress-count">0 / 0 完了</span>
+                <span class="progress-percent">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+        </div>
+
         <div
             class="task-list"
             id="list3">
@@ -533,6 +603,16 @@ h1{
         <h2 class="sandbox-title">
             Sandbox
         </h2>
+
+        <div class="progress">
+            <div class="progress-text">
+                <span class="progress-count">0 / 0 完了</span>
+                <span class="progress-percent">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+        </div>
 
         <div class="input-row">
 
@@ -561,6 +641,28 @@ h1{
 
 let draggedTask = null;
 let editMode = false;
+
+/* ===== 達成率 ===== */
+
+function updateProgress(){
+    document.querySelectorAll(".card").forEach(card=>{
+        const list = card.querySelector(".task-list");
+        const count = card.querySelector(".progress-count");
+        const percent = card.querySelector(".progress-percent");
+        const fill = card.querySelector(".progress-fill");
+
+        if(!list || !count || !percent || !fill) return;
+
+        const tasks = list.querySelectorAll(".task");
+        const total = tasks.length;
+        const done = list.querySelectorAll(".task.done").length;
+        const rate = total === 0 ? 0 : Math.round((done / total) * 100);
+
+        count.textContent = `${done} / ${total} 完了`;
+        percent.textContent = `${rate}%`;
+        fill.style.width = `${rate}%`;
+    });
+}
 
 /* ===== 保存 ===== */
 
@@ -599,6 +701,8 @@ function saveData(){
         "flowBoardData",
         JSON.stringify(data)
     );
+
+    updateProgress();
 }
 
 /* ===== 読み込み ===== */
@@ -612,7 +716,10 @@ function loadData(){
             )
         );
 
-    if(!data) return;
+    if(!data){
+        updateProgress();
+        return;
+    }
 
     Object.keys(data)
     .forEach(listId=>{
@@ -644,6 +751,8 @@ function loadData(){
             .appendChild(task);
         });
     });
+
+    updateProgress();
 }
 
 /* ===== 編集モード ===== */
@@ -966,6 +1075,7 @@ document
 /* ===== 初回 ===== */
 
 loadData();
+updateProgress();
 
 </script>
 
